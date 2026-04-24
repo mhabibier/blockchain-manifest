@@ -1,0 +1,60 @@
+# k8s/overlays/production/kustomization.yaml
+# Production overlay for blockchain-node.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace untuk jaringan produksi blockchain
+namespace: blockchain-network
+
+resources:
+  - ../../base
+
+# ── Image: Gunakan versi stable/LTS yang spesifik ────────────────────────────
+images:
+  - name: ethereum/client-go # Sesuaikan dengan image di base
+    newTag: "v1.13.15" # Gunakan tag versi spesifik (immutable)
+
+# ── Patches ───────────────────────────────────────────────────────────────────
+patches:
+  # Patch Deployment/StatefulSet: Resource besar untuk performa maksimal
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: blockchain-node
+        namespace: blockchain-network
+      spec:
+        replicas: 3 # Menjalankan beberapa node untuk ketersediaan tinggi (HA)
+        template:
+          spec:
+            containers:
+              - name: blockchain-node
+                resources:
+                  requests:
+                    cpu:    "1000m" # Minimal 1 core untuk verifikasi blok
+                    memory: "2Gi"   # RAM besar agar cache database optimal
+                  limits:
+                    cpu:    "2000m"
+                    memory: "4Gi"
+
+  # REMOVE HPA: Blockchain node tidak cocok di-scale otomatis dengan HPA
+  # Kita menggunakan patch delete jika HPA ada di folder base.
+  - patch: |-
+      $patch: delete
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: blockchain-node-hpa
+        namespace: blockchain-network
+
+# ── Production-specific config overrides ─────────────────────────────────────
+configMapGenerator:
+  - name: blockchain-node-config
+    namespace: blockchain-network
+    behavior: merge
+    literals:
+      - NODE_ENV=production
+      - SYNC_MODE=full # Wajib 'full' agar node memverifikasi seluruh sejarah blok
+      - VERBOSITY=3 # Info level (tidak terlalu verbose untuk menghemat storage log)
+      - CACHE=1024 # Alokasi RAM khusus untuk cache database (dalam MB)

@@ -1,0 +1,54 @@
+# k8s/overlays/development/kustomization.yaml
+# Development overlay for blockchain-node.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace harus sinkron dengan base blockchain
+namespace: blockchain-network
+
+resources:
+  - ../../base
+
+# ── Image: Menggunakan image blockchain dengan tag dev/stable ────────────────
+images:
+  - name: ethereum/client-go
+    newTag: stable-dev # Atau tag spesifik untuk testing
+
+# ── Patches ───────────────────────────────────────────────────────────────────
+patches:
+  # Patch Deployment/StatefulSet:
+  # Di dev, kita batasi resource tapi tetap lebih besar dari microservice biasa
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: blockchain-node
+        namespace: blockchain-network
+      spec:
+        replicas: 1 # Blockchain dev biasanya cukup 1 node (Single Node Private Network)
+        template:
+          spec:
+            containers:
+              - name: blockchain-node
+                resources:
+                  requests:
+                    cpu:    "200m"  # Blockchain butuh CPU lebih untuk verifikasi transaksi
+                    memory: "512Mi" # RAM minimum agar node tidak OOM (Out Of Memory)
+                  limits:
+                    cpu:    "500m"
+                    memory: "1Gi"
+
+  # REMOVE HPA: Blockchain node tidak bisa di-scale otomatis dengan HPA standar
+  # karena setiap node butuh sinkronisasi storage yang unik.
+  # Jika di 'base' ada HPA, kita bisa menonaktifkannya atau membuangnya.
+
+# ── Dev-specific config overrides ─────────────────────────────────────────────
+configMapGenerator:
+  - name: blockchain-node-config
+    namespace: blockchain-network
+    behavior: merge
+    literals:
+      - SYNC_MODE=light # Mode 'light' sangat disarankan untuk dev agar cepat & hemat disk
+      - VERBOSITY=4 # Log lebih detail (Debug) untuk memantau trafik blockchain
+      - NETWORK_ID=12345 # ID jaringan privat untuk development
