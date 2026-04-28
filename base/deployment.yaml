@@ -1,64 +1,103 @@
+# Deployment for Blockchain Microservice
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: blockchain-node
-  namespace: blockchain-network
+  name: blockchain-service
+  namespace: blockchain-service
   labels:
-    app.kubernetes.io/name: blockchain-node
-    app.kubernetes.io/component: validator # atau bootnode/rpc
+    app.kubernetes.io/name: blockchain-service
+    app.kubernetes.io/component: server
     app.kubernetes.io/version: "1.0.0"
 spec:
-  replicas: 1 # Node blockchain biasanya bersifat stateful (disarankan 1 per deployment atau gunakan StatefulSet)
+  replicas: 1
   selector:
     matchLabels:
-      app: blockchain-node
+      app: blockchain-service
   strategy:
-    type: Recreate # Lebih aman untuk blockchain agar tidak ada dua pod mengakses data directory yang sama
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
-        app: blockchain-node
+        app: blockchain-service
+        app.kubernetes.io/name: blockchain-service
+        app.kubernetes.io/component: server
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "6060" # Port metrik standar Geth/Besu
-        prometheus.io/path: "/debug/metrics"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
     spec:
-      serviceAccountName: blockchain-node-sa
       securityContext:
-        fsGroup: 1001 # Penting untuk akses baca/tulis ke volume
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: harbor-secret
       containers:
-        - name: blockchain-node
-          image: ethereum/client-go:stable # Contoh menggunakan Geth
+        - name: blockchain-service
+          image: harbor.sxdentrypoint.my.id/test/blockchain-svc:latest
           imagePullPolicy: Always
-          args:
-            - "--networkid=12345"
-            - "--http"
-            - "--http.addr=0.0.0.0"
-            - "--http.vhosts=*"
-            - "--http.api=eth,net,web3"
-            - "--datadir=/data"
-            - "--port=30303" # P2P Port
           ports:
-            - name: rpc
-              containerPort: 8545
+            - name: http
+              containerPort: 3000
               protocol: TCP
-            - name: p2p
-              containerPort: 30303
-              protocol: TCP
-            - name: metrics
-              containerPort: 6060
-              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: ["ALL"]
           envFrom:
             - configMapRef:
-                name: blockchain-node-config
+                name: blockchain-service-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: blockchain-service-secret
+                  key: DATABASE_URL
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 6
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
           volumeMounts:
-            - name: blockchain-data
-              mountPath: /data
             - name: tmp
               mountPath: /tmp
       volumes:
-        - name: blockchain-data
-          # Untuk blockchain asli, gunakan PersistentVolumeClaim (PVC)
-          emptyDir: {}
         - name: tmp
           emptyDir: {}

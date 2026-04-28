@@ -1,0 +1,40 @@
+# Service for Blockchain Microservice
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockchain-service
+  namespace: blockchain-service
+  labels:
+    app.kubernetes.io/name: blockchain-service
+    app.kubernetes.io/component: server
+spec:
+  type: ClusterIP
+  selector:
+    app: blockchain-service
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+# ---
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: blockchain-service-np
+#   namespace: blockchain-service
+#   labels:
+#     app.kubernetes.io/name: blockchain-service
+#     app.kubernetes.io/component: server-nodeport
+# spec:
+#   type: NodePort
+#   selector:
+#     app: blockchain-service   # Must match pod template labels in Deployment
+#   ports:
+#     - name: http
+#       port: 3000          # Cluster-internal port clients connect to
+#       targetPort: http        # Named port on the pod (containerPort: 3000)
+#       protocol: TCP
+#       nodePort: 30081    # Optional fixed node port (30000-32767)

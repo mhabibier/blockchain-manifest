@@ -1,14 +1,15 @@
+# ConfigMap for Blockchain Microservice
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: blockchain-node-config
-  namespace: blockchain-network
+  name: blockchain-service-config
+  namespace: blockchain-service
 data:
-  NETWORK_ID: "12345"
-  SYNC_MODE: "full" # Mendownload seluruh riwayat transaksi
-  VERBOSITY: "3" # Level log untuk monitoring
-  # Port untuk komunikasi antar-komputer (Peer-to-Peer)
-  P2P_PORT: "30303"
-  # Mengaktifkan HTTP-RPC agar aplikasi luar bisa membaca data blockchain
-  RPC_ENABLE: "true"
-  RPC_ADDR: "0.0.0.0"
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  NODE_ENV: "production"
+  SERVICE_NAME: "blockchain-service"
+  SERVICE_VERSION: "1.0.0"
+  LOG_LEVEL: "INFO"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy.observability.svc.cluster.local:4317"
