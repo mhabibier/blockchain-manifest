@@ -1,0 +1,6 @@
+projectKey=blockchain-service
+serverUrl=https://sonar.sxdentrypoint.my.id
+serverVersion=10.3.0.82913
+dashboardUrl=https://sonar.sxdentrypoint.my.id/dashboard?id=blockchain-service
+ceTaskId=AZ4eOH358t7cQ3cge7d3
+ceTaskUrl=https://sonar.sxdentrypoint.my.id/api/ce/task?id=AZ4eOH358t7cQ3cge7d3
