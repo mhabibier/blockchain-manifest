@@ -42,7 +42,7 @@ spec:
         - name: harbor-secret
       containers:
         - name: blockchain-service
-          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:453543d5
+          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:82b7c2d8
           imagePullPolicy: Always
           ports:
             - name: http
