@@ -43,7 +43,7 @@ spec:
       containers:
         - name: blockchain-service
           # TODO: Update tag to the new CVE-free image after confirming uvicorn exists
-          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:bb35bf97
+          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:4c083a87
           imagePullPolicy: Always
           ports:
             - name: http
