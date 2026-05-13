@@ -42,7 +42,8 @@ spec:
         - name: harbor-secret
       containers:
         - name: blockchain-service
-          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:4c083a87
+          # TODO: Update tag to the new CVE-free image after confirming uvicorn exists
+          image: harbor.sxdentrypoint.my.id/devsecops/blockchain-svc:bb35bf97
           imagePullPolicy: Always
           ports:
             - name: http
