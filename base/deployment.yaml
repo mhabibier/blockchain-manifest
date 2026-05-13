@@ -64,6 +64,18 @@ spec:
                 secretKeyRef:
                   name: blockchain-service-secret
                   key: DATABASE_URL
+          command:
+            - /opt/venv/bin/uvicorn
+            - app.main:app
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "3000"
+            - --workers
+            - "1"
+            - --no-access-log
+            - --log-level
+            - warning
           startupProbe:
             httpGet:
               path: /health
