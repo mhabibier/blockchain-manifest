@@ -65,18 +65,17 @@ spec:
                   name: blockchain-service-secret
                   key: DATABASE_URL
           command:
-            - /bin/sh
-            - -c
-            - |
-              UVICORN=""
-              if [ -f /opt/venv/bin/uvicorn ]; then
-                UVICORN=/opt/venv/bin/uvicorn
-              elif [ -f /usr/local/bin/uvicorn ]; then
-                UVICORN=/usr/local/bin/uvicorn
-              else
-                echo "ERROR: uvicorn not found" && exit 1
-              fi
-              exec $UVICORN app.main:app --host 0.0.0.0 --port 3000 --workers 1 --no-access-log --log-level warning
+            - /opt/venv/bin/uvicorn
+            - app.main:app
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "3000"
+            - --workers
+            - "1"
+            - --no-access-log
+            - --log-level
+            - warning
           startupProbe:
             httpGet:
               path: /health
